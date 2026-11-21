@@ -1,7 +1,6 @@
 package com.kisan.farminggame
 
 import android.os.Bundle
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -11,21 +10,35 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        val title = findViewById<TextView>(R.id.tvHomeTitle)
         val nav = findViewById<BottomNavigationView>(R.id.bottomNav)
 
-        // Abhi har tab sirf apna naam dikhata hai. Asli screens Update 2 se aayengi.
-        title.text = getString(R.string.nav_khet)
+        if (savedInstanceState == null) {
+            showFragment(KhetFragment())
+        }
 
         nav.setOnItemSelectedListener { item ->
-            title.text = when (item.itemId) {
-                R.id.nav_khet -> getString(R.string.nav_khet)
-                R.id.nav_factory -> getString(R.string.nav_factory)
-                R.id.nav_castle -> getString(R.string.nav_castle)
-                R.id.nav_dukaan -> getString(R.string.nav_dukaan)
-                else -> title.text
+            when (item.itemId) {
+                R.id.nav_khet -> showFragment(KhetFragment())
+                else -> showPlaceholder(item.title.toString())
             }
             true
         }
+    }
+
+    private fun showFragment(fragment: androidx.fragment.app.Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .commit()
+    }
+
+    private fun showPlaceholder(title: String) {
+        val tv = android.widget.TextView(this).apply {
+            text = "$title (agle update mein banega)"
+            gravity = android.view.Gravity.CENTER
+            textSize = 20f
+        }
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, PlaceholderFragment.newInstance(title))
+            .commit()
     }
 }
