@@ -1,50 +1,78 @@
-package com.kisan.farminggame.ui
+package com.kisan.farminggame
 
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.kisan.farminggame.R
 import com.kisan.farminggame.data.GameState
-import com.kisan.farminggame.data.MachineList
+import com.kisan.farminggame.ui.MachineAdapter
 
-class MachineAdapter(
-    private val onPartTap: (machine: Int, part: Int) -> Unit
-) : RecyclerView.Adapter<MachineAdapter.VH>() {
+class MachineFragment : Fragment() {
 
-    class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val title: TextView = view.findViewById(R.id.tvMachineTitle)
-        val info: TextView = view.findViewById(R.id.tvMachineInfo)
-        val parts: TextView = view.findViewById(R.id.tvParts)
+    private var adapter: MachineAdapter? = null
+    private var tvCredits: TextView? = null
+    private val handler = Handler(Looper.getMainLooper())
+
+    private val ticker = object : Runnable {
+        override fun run() {
+            refreshScreen()
+            handler.postDelayed(this, 1000)
+        }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_machine, parent, false)
-        return VH(v)
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View = inflater.inflate(R.layout.fragment_machine, container, false)
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        tvCredits = view.findViewById(R.id.tvMachineCredits)
+
+        val rv = view.findViewById<RecyclerView>(R.id.rvMachine)
+        rv.layoutManager = LinearLayoutManager(requireContext())
+
+        val newAdapter = MachineAdapter { machine, part ->
+            if (GameState.upgradePart(machine, part)) {
+                toast("Part upgrade hua!")
+            } else {
+                toast("Paise kam hain ya part max level par hai")
+            }
+            refreshScreen()
+        }
+        adapter = newAdapter
+        rv.adapter = newAdapter
+        refreshScreen()
     }
 
-    override fun getItemCount() = MachineList.machines.size
+    private fun refreshScreen() {
+        adapter?.notifyDataSetChanged()
+        tvCredits?.text = "Credits: ${GameState.credits}"
+    }
 
-    override fun onBindViewHolder(holder: VH, position: Int) {
-        val machine = MachineList.machines[position]
-        val income = GameState.machineIncome(position)
-        holder.title.text = "${machine.id}. ${machine.name}"
-        holder.info.text = "Income: %.1f per sec | Parts: %d/49".format(
-            income, GameState.machineParts[position].sum()
-        )
+    private fun toast(msg: String) {
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+    }
 
-        // 7 parts ka text: har part par tap karke upgrade hoga
-        val lines = GameState.machineParts[position].mapIndexed { p, level ->
-            "Part ${p + 1}: Level $level (upgrade: ${GameState.partUpgradeCost(position, p)})"
-        }
-        holder.parts.text = lines.joinToString("\n")
+    override fun onResume() {
+        super.onResume()
+        handler.post(ticker)
+    }
 
-        holder.itemView.setOnClickListener {
-            // Sabse kam level wala part upgrade hoga
-            val parts = GameState.machineParts[position]
-            val weakest = parts.indices.minByOrNull { parts[it] } ?: 0
-            onPartTap(position, weakest)
-        }
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(ticker)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        adapter = null
+        tvCredits = null
     }
 }
