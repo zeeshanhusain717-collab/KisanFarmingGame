@@ -1,33 +1,48 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="12dp"
-    android:background="#FFFFFF">
+package com.kisan.farminggame.ui
 
-    <TextView
-        android:id="@+id/tvMachineTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#1B5E20" />
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import com.kisan.farminggame.R
+import com.kisan.farminggame.data.GameState
+import com.kisan.farminggame.data.MachineList
 
-    <TextView
-        android:id="@+id/tvMachineInfo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:textSize="14sp"
-        android:textColor="#424242" />
+class MachineAdapter(
+    private val onPartTap: (machine: Int, part: Int) -> Unit
+) : RecyclerView.Adapter<MachineAdapter.VH>() {
 
-    <TextView
-        android:id="@+id/tvParts"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textSize="13sp"
-        android:textColor="#616161" />
+    class VH(view: View) : RecyclerView.ViewHolder(view) {
+        val title: TextView = view.findViewById(R.id.tvMachineTitle)
+        val info: TextView = view.findViewById(R.id.tvMachineInfo)
+        val parts: TextView = view.findViewById(R.id.tvParts)
+    }
 
-</LinearLayout>
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_machine, parent, false)
+        return VH(v)
+    }
+
+    override fun getItemCount() = MachineList.machines.size
+
+    override fun onBindViewHolder(holder: VH, position: Int) {
+        val machine = MachineList.machines[position]
+        val income = GameState.machineIncome(position)
+        val totalParts = GameState.machineParts[position].sum()
+
+        holder.title.text = "${machine.id}. ${machine.name}"
+        holder.info.text = "Income: %.1f per sec | Parts: %d/49".format(income, totalParts)
+
+        val lines = GameState.machineParts[position].mapIndexed { p, level ->
+            "Part ${p + 1}: Level $level (upgrade: ${GameState.partUpgradeCost(position, p)})"
+        }
+        holder.parts.text = lines.joinToString("\n")
+
+        holder.itemView.setOnClickListener {
+            val parts = GameState.machineParts[position]
+            val weakest = parts.indices.minByOrNull { parts[it] } ?: 0
+            onPartTap(position, weakest)
+        }
+    }
+}
