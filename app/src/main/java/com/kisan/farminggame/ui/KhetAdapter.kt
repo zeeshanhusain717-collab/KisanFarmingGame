@@ -30,32 +30,33 @@ class KhetAdapter(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val crop = CropList.crops[position]
         holder.title.text = "Khet ${crop.id}: ${crop.name}"
+        holder.action.setOnClickListener { onAction(position) }
 
         if (!GameState.plotUnlocked[position]) {
             holder.info.text = "LOCKED. Unlock: ${crop.unlockCost} credits"
             holder.action.text = "Unlock"
             holder.action.isEnabled = true
-        } else {
-            when (GameState.plotStatus[position]) {
-                0 -> {
-                    holder.info.text = "Khaali. Daam: ${crop.pricePerUnit} per unit"
-                    holder.action.text = "Beej bo'o"
-                    holder.action.isEnabled = true
-                }
-                1 -> {
-                    val left = GameState.secondsLeft(position)
-                    holder.info.text = "Ug rahi hai. Baaki: ${left} sec"
-                    holder.action.text = "Ruko"
-                    holder.action.isEnabled = false
-                }
-                else -> {
-                    holder.info.text = "Tayar hai! Kaato aur paisa lo"
-                    holder.action.text = "Kaato"
-                    holder.action.isEnabled = true
-                }
-            }
+            return
         }
 
-        holder.action.setOnClickListener { onAction(position) }
+        GameState.refreshStatus(position)
+        when (GameState.plotStatus[position]) {
+            0 -> {
+                holder.info.text = "Khaali. Daam: ${crop.pricePerUnit} per unit"
+                holder.action.text = "Beej bo'o"
+                holder.action.isEnabled = true
+            }
+            1 -> {
+                val left = GameState.secondsLeft(position)
+                holder.info.text = "Ug rahi hai. Baaki: $left sec"
+                holder.action.text = "Ruko"
+                holder.action.isEnabled = false
+            }
+            else -> {
+                holder.info.text = "Tayar hai! Kaato aur paisa lo"
+                holder.action.text = "Kaato"
+                holder.action.isEnabled = true
+            }
+        }
     }
 }
