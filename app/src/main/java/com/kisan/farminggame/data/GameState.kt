@@ -3,23 +3,31 @@ package com.kisan.farminggame.data
 object GameState {
     var credits: Int = 777
 
-    // Har khet ki state: unlocked, aur fasal ka status
-    // status: 0 = khaali, 1 = ug rahi hai, 2 = tayar hai
     val plotUnlocked = BooleanArray(7) { it == 0 }
-    val plotStatus = IntArray(7)
+    val plotStatus = IntArray(7)          // 0 = khaali, 1 = ug rahi hai, 2 = tayar
     val plotStartTime = LongArray(7)
 
-    fun isReady(index: Int): Boolean {
-        if (plotStatus[index] != 1) return false
-        val crop = CropList.crops[index]
-        val elapsed = (System.currentTimeMillis() - plotStartTime[index]) / 1000
-        return elapsed >= crop.growSeconds
-    }
+    // Machines ka level: har machine ke 7 parts, har part ka level 1 se 7
+    val machineParts = Array(7) { IntArray(7) { 1 } }
+
+    fun elapsedSeconds(index: Int): Long =
+        (System.currentTimeMillis() - plotStartTime[index]) / 1000
 
     fun secondsLeft(index: Int): Long {
         val crop = CropList.crops[index]
-        val elapsed = (System.currentTimeMillis() - plotStartTime[index]) / 1000
-        return (crop.growSeconds - elapsed).coerceAtLeast(0)
+        return (crop.growSeconds - elapsedSeconds(index)).coerceAtLeast(0)
+    }
+
+    // Ug rahi fasal ka status ab khud check hota hai
+    fun refreshStatus(index: Int) {
+        if (plotStatus[index] == 1 && secondsLeft(index) == 0L) {
+            plotStatus[index] = 2
+        }
+    }
+
+    fun isReady(index: Int): Boolean {
+        refreshStatus(index)
+        return plotStatus[index] == 2
     }
 
     fun plant(index: Int): Boolean {
@@ -46,5 +54,34 @@ object GameState {
         credits -= crop.unlockCost
         plotUnlocked[index] = true
         return true
+    }
+
+    // Machine ki income per second
+    fun machineIncome(index: Int): Double {
+        val machine = MachineList.machines[index]
+        val partsSum = machineParts[index].sum()
+        return machine.baseIncome * partsSum / 7.0
+    }
+
+    fun totalIncomePerSecond(): Double =
+        MachineList.machines.indices.sumOf { machineIncome(it) }
+
+    fun partUpgradeCost(machineIndex: Int, partIndex: Int): Int =
+        50 * machineParts[machineIndex][partIndex]
+
+    fun upgradePart(machineIndex: Int, partIndex: Int): Boolean {
+        val level = machineParts[machineIndex][partIndex]
+        if (level >= 7) return false
+        val cost = partUpgradeCost(machineIndex, partIndex)
+        if (credits < cost) return false
+        credits -= cost
+        machineParts[machineIndex][partIndex] = level + 1
+        return true
+    }
+
+    // Har tick par machines ki kamai credits mein judti hai
+    fun tick(secondsPassed: Double) {
+        credits += (totalIncomePerSecond() * secondsPassed).toInt()
+        for (i in plotStatus.indices) refreshStatus(i)
     }
 }
