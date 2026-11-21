@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Kisan Farming Game</string>
+    <string name="game_start">Game Start</string>
+    <string name="nav_khet">Khet</string>
+    <string name="nav_factory">Factory</string>
+    <string name="nav_castle">Castle</string>
+    <string name="nav_dukaan">Dukaan</string>
+</resources>
