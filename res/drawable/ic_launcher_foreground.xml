@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Zameen -->
+    <path
+        android:fillColor="#8D6E63"
+        android:pathData="M24,72 L84,72 L84,84 L24,84 Z" />
+
+    <!-- Tana -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M52,72 L56,72 L56,40 L52,40 Z" />
+
+    <!-- Patta -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M54,44 C44,44 38,36 38,36 C48,34 56,38 54,44 Z" />
+
+    <!-- Anaj ka sirs -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M54,40 C60,40 66,34 66,34 C60,30 54,34 54,40 Z" />
+
+</vector>
