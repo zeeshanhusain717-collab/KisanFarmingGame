@@ -1,86 +1,43 @@
 package com.kisan.farminggame
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.kisan.farminggame.data.CropList
-import com.kisan.farminggame.data.GameState
-import com.kisan.farminggame.ui.KhetAdapter
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.kisan.farminggame.data.SaveManager
 
-class KhetFragment : Fragment() {
+class HomeActivity : AppCompatActivity() {
 
-    private lateinit var adapter: KhetAdapter
-    private lateinit var tvCredits: TextView
-    private val handler = Handler(Looper.getMainLooper())
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_home)
 
-    private val ticker = object : Runnable {
-        override fun run() {
-            GameState.tick(1.0)
-            adapter.notifyDataSetChanged()
-            tvCredits.text = "Credits: ${GameState.credits}"
-            handler.postDelayed(this, 1000)
+        SaveManager.load(this)
+
+        val nav = findViewById<BottomNavigationView>(R.id.bottomNav)
+
+        if (savedInstanceState == null) {
+            showFragment(KhetFragment())
+        }
+
+        nav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_khet -> showFragment(KhetFragment())
+                R.id.nav_factory -> showFragment(MachineFragment())
+                else -> showFragment(PlaceholderFragment.newInstance(item.title.toString()))
+            }
+            true
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View = inflater.inflate(R.layout.fragment_khet, container, false)
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        tvCredits = view.findViewById(R.id.tvCredits)
-
-        val rv = view.findViewById<RecyclerView>(R.id.rvKhet)
-        rv.layoutManager = LinearLayoutManager(requireContext())
-
-        adapter = KhetAdapter { index -> onKhetTap(index) }
-        rv.adapter = adapter
-        tvCredits.text = "Credits: ${GameState.credits}"
-    }
-
-    private fun onKhetTap(index: Int) {
-        val crop = CropList.crops[index]
-        when {
-            !GameState.plotUnlocked[index] -> {
-                if (GameState.unlock(index)) {
-                    toast("${crop.name} khet unlock hua!")
-                } else {
-                    toast("Paise kam hain ya pichla khet unlock karo")
-                }
-            }
-            GameState.plotStatus[index] == 0 -> {
-                GameState.plant(index)
-                toast("${crop.name} ka beej bo diya")
-            }
-            GameState.isReady(index) -> {
-                val gain = GameState.harvest(index)
-                toast("+$gain credits mile!")
-            }
-            else -> toast("Abhi ug rahi hai")
-        }
-        adapter.notifyDataSetChanged()
-        tvCredits.text = "Credits: ${GameState.credits}"
-    }
-
-    private fun toast(msg: String) {
-        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        handler.post(ticker)
+    private fun showFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .commit()
     }
 
     override fun onPause() {
         super.onPause()
-        handler.removeCallbacks(ticker)
+        SaveManager.save(this)
     }
 }
