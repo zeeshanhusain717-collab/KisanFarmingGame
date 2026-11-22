@@ -8,6 +8,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.kisan.farminggame.data.Balance
 import com.kisan.farminggame.data.GameState
 import com.kisan.farminggame.data.SaveManager
 
@@ -38,7 +39,7 @@ class SettingsFragment : Fragment() {
             "Credits: ${GameState.credits}\n" +
             "E-Crystals: ${GameState.crystals}\n" +
             "Castle Tier: ${GameState.tier}/7\n\n" +
-            "Offline kamai max: ${GameState.MAX_OFFLINE_SECONDS / 3600} ghante tak.\n" +
+            "Offline kamai max: ${Balance.MAX_OFFLINE_SECONDS / 3600} ghante tak.\n" +
             "App band karne par progress apne aap save hoti hai."
     }
 
