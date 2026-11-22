@@ -2,13 +2,28 @@ package com.kisan.farminggame.data
 
 object GameState {
     var credits: Int = 777
+    var tier: Int = 1  // Castle tier 1 se 7
 
     val plotUnlocked = BooleanArray(7) { it == 0 }
     val plotStatus = IntArray(7)          // 0 = khaali, 1 = ug rahi hai, 2 = tayar
     val plotStartTime = LongArray(7)
 
-    // Machines ka level: har machine ke 7 parts, har part ka level 1 se 7
+    // Machines ke 7 parts, har part ka level 1 se 7
     val machineParts = Array(7) { IntArray(7) { 1 } }
+
+    // Castle tier ka bonus: har tier par 10% extra
+    fun bonus(): Double = 1.0 + 0.1 * (tier - 1)
+
+    fun castleCost(): Int = 500 * tier
+
+    fun upgradeCastle(): Boolean {
+        if (tier >= 7) return false
+        val cost = castleCost()
+        if (credits < cost) return false
+        credits -= cost
+        tier += 1
+        return true
+    }
 
     fun elapsedSeconds(index: Int): Long =
         (System.currentTimeMillis() - plotStartTime[index]) / 1000
@@ -18,7 +33,6 @@ object GameState {
         return (crop.growSeconds - elapsedSeconds(index)).coerceAtLeast(0)
     }
 
-    // Ug rahi fasal ka status ab khud check hota hai
     fun refreshStatus(index: Int) {
         if (plotStatus[index] == 1 && secondsLeft(index) == 0L) {
             plotStatus[index] = 2
@@ -40,7 +54,7 @@ object GameState {
     fun harvest(index: Int): Int {
         if (!isReady(index)) return 0
         val crop = CropList.crops[index]
-        val gain = crop.pricePerUnit * 7
+        val gain = (crop.pricePerUnit * 7 * bonus()).toInt()
         credits += gain
         plotStatus[index] = 0
         return gain
@@ -56,11 +70,10 @@ object GameState {
         return true
     }
 
-    // Machine ki income per second
     fun machineIncome(index: Int): Double {
         val machine = MachineList.machines[index]
         val partsSum = machineParts[index].sum()
-        return machine.baseIncome * partsSum / 7.0
+        return machine.baseIncome * partsSum / 7.0 * bonus()
     }
 
     fun totalIncomePerSecond(): Double =
@@ -79,7 +92,6 @@ object GameState {
         return true
     }
 
-    // Har tick par machines ki kamai credits mein judti hai
     fun tick(secondsPassed: Double) {
         credits += (totalIncomePerSecond() * secondsPassed).toInt()
         for (i in plotStatus.indices) refreshStatus(i)
