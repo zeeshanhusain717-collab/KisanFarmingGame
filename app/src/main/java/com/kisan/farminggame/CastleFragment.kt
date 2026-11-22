@@ -10,8 +10,8 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.kisan.farminggame.data.CastleList
 import com.kisan.farminggame.data.GameState
+import com.kisan.farminggame.data.StoryList
 
 class CastleFragment : Fragment() {
 
@@ -43,7 +43,7 @@ class CastleFragment : Fragment() {
 
         btnUpgrade?.setOnClickListener {
             if (GameState.upgradeCastle()) {
-                toast("Castle Tier ${GameState.tier} unlock hua!")
+                toast("Castle Tier ${GameState.tier} unlock hua! Naya chapter khula.")
             } else if (GameState.tier >= 7) {
                 toast("Castle poora ban chuka hai")
             } else {
@@ -58,7 +58,14 @@ class CastleFragment : Fragment() {
         val t = GameState.tier
         tvCredits?.text = "Credits: ${GameState.credits}"
         tvTier?.text = "Rajput Agri-Palace - Tier $t/7"
-        tvChapter?.text = CastleList.chapters[t - 1]
+
+        val chapter = StoryList.chapters.getOrNull(t - 1)
+        tvChapter?.text = if (chapter != null) {
+            "Chapter ${chapter.number}: ${chapter.title}\n\n${chapter.text}"
+        } else {
+            StoryList.ending
+        }
+
         tvBonus?.text = "Income bonus: +${((GameState.bonus() - 1) * 100).toInt()}%"
 
         val button = btnUpgrade ?: return
