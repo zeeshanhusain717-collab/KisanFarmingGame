@@ -2,17 +2,32 @@ package com.kisan.farminggame.data
 
 object GameState {
     var credits: Int = 777
-    var tier: Int = 1  // Castle tier 1 se 7
+    var crystals: Int = 77
+    var tier: Int = 1
+
+    // Shop ke boosts: kitni baar kharide gaye
+    var cropBoostLevel: Int = 0      // har level par fasal ka daam +10%
+    var machineBoostLevel: Int = 0   // har level par machine income +10%
 
     val plotUnlocked = BooleanArray(7) { it == 0 }
-    val plotStatus = IntArray(7)          // 0 = khaali, 1 = ug rahi hai, 2 = tayar
+    val plotStatus = IntArray(7)
     val plotStartTime = LongArray(7)
 
-    // Machines ke 7 parts, har part ka level 1 se 7
     val machineParts = Array(7) { IntArray(7) { 1 } }
 
-    // Castle tier ka bonus: har tier par 10% extra
+    // Final balance: maximum credits limit (game ko achanak bahut bada na hone dein)
+    const val MAX_CREDITS = 9_999_999
+
+    fun clampCredits() {
+        if (credits > MAX_CREDITS) credits = MAX_CREDITS
+        if (credits < 0) credits = 0
+    }
+
     fun bonus(): Double = 1.0 + 0.1 * (tier - 1)
+
+    fun cropBoost(): Double = 1.0 + 0.1 * cropBoostLevel
+
+    fun machineBoost(): Double = 1.0 + 0.1 * machineBoostLevel
 
     fun castleCost(): Int = 500 * tier
 
@@ -22,6 +37,7 @@ object GameState {
         if (credits < cost) return false
         credits -= cost
         tier += 1
+        clampCredits()
         return true
     }
 
@@ -54,8 +70,9 @@ object GameState {
     fun harvest(index: Int): Int {
         if (!isReady(index)) return 0
         val crop = CropList.crops[index]
-        val gain = (crop.pricePerUnit * 7 * bonus()).toInt()
+        val gain = (crop.pricePerUnit * 7 * bonus() * cropBoost()).toInt()
         credits += gain
+        clampCredits()
         plotStatus[index] = 0
         return gain
     }
@@ -73,7 +90,7 @@ object GameState {
     fun machineIncome(index: Int): Double {
         val machine = MachineList.machines[index]
         val partsSum = machineParts[index].sum()
-        return machine.baseIncome * partsSum / 7.0 * bonus()
+        return machine.baseIncome * partsSum / 7.0 * bonus() * machineBoost()
     }
 
     fun totalIncomePerSecond(): Double =
@@ -94,6 +111,36 @@ object GameState {
 
     fun tick(secondsPassed: Double) {
         credits += (totalIncomePerSecond() * secondsPassed).toInt()
+        clampCredits()
         for (i in plotStatus.indices) refreshStatus(i)
+    }
+
+    // Dukaan: E-Crystals credits se kharidna
+    fun buyCrystals(): Boolean {
+        val cost = ShopList.crystalPackCost
+        if (credits < cost) return false
+        credits -= cost
+        crystals += ShopList.crystalPackAmount
+        return true
+    }
+
+    // Dukaan: fasal boost (crystals se)
+    fun buyCropBoost(): Boolean {
+        if (cropBoostLevel >= 5) return false
+        val cost = ShopList.boostCost
+        if (crystals < cost) return false
+        crystals -= cost
+        cropBoostLevel += 1
+        return true
+    }
+
+    // Dukaan: machine boost (crystals se)
+    fun buyMachineBoost(): Boolean {
+        if (machineBoostLevel >= 5) return false
+        val cost = ShopList.boostCost
+        if (crystals < cost) return false
+        crystals -= cost
+        machineBoostLevel += 1
+        return true
     }
 }
