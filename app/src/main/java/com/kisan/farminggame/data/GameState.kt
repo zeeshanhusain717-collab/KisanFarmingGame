@@ -8,17 +8,16 @@ object GameState {
     var cropBoostLevel: Int = 0
     var machineBoostLevel: Int = 0
 
+    // Tutorial sirf ek baar dikhega
+    var tutorialSeen: Boolean = false
+
     val plotUnlocked = BooleanArray(7) { it == 0 }
     val plotStatus = IntArray(7)
     val plotStartTime = LongArray(7)
 
     val machineParts = Array(7) { IntArray(7) { 1 } }
 
-    // Offline progress ke liye: last save ka time (milliseconds)
     var lastSavedTime: Long = System.currentTimeMillis()
-
-    // Offline kamai ki maximum seconds (12 ghante)
-    const val MAX_OFFLINE_SECONDS = 12L * 3600L
 
     const val MAX_CREDITS = 9_999_999
 
@@ -27,13 +26,13 @@ object GameState {
         if (credits < 0) credits = 0
     }
 
-    fun bonus(): Double = 1.0 + 0.1 * (tier - 1)
+    fun bonus(): Double = 1.0 + Balance.TIER_BONUS_STEP * (tier - 1)
 
-    fun cropBoost(): Double = 1.0 + 0.1 * cropBoostLevel
+    fun cropBoost(): Double = 1.0 + Balance.BOOST_STEP * cropBoostLevel
 
-    fun machineBoost(): Double = 1.0 + 0.1 * machineBoostLevel
+    fun machineBoost(): Double = 1.0 + Balance.BOOST_STEP * machineBoostLevel
 
-    fun castleCost(): Int = 500 * tier
+    fun castleCost(): Int = Balance.CASTLE_BASE_COST * tier
 
     fun upgradeCastle(): Boolean {
         if (tier >= 7) return false
@@ -74,7 +73,7 @@ object GameState {
     fun harvest(index: Int): Int {
         if (!isReady(index)) return 0
         val crop = CropList.crops[index]
-        val gain = (crop.pricePerUnit * 7 * bonus() * cropBoost()).toInt()
+        val gain = (crop.pricePerUnit * Balance.UNITS_PER_HARVEST * bonus() * cropBoost()).toInt()
         credits += gain
         clampCredits()
         plotStatus[index] = 0
@@ -101,11 +100,11 @@ object GameState {
         MachineList.machines.indices.sumOf { machineIncome(it) }
 
     fun partUpgradeCost(machineIndex: Int, partIndex: Int): Int =
-        50 * machineParts[machineIndex][partIndex]
+        Balance.PART_UPGRADE_BASE_COST * machineParts[machineIndex][partIndex]
 
     fun upgradePart(machineIndex: Int, partIndex: Int): Boolean {
         val level = machineParts[machineIndex][partIndex]
-        if (level >= 7) return false
+        if (level >= Balance.MAX_PART_LEVEL) return false
         val cost = partUpgradeCost(machineIndex, partIndex)
         if (credits < cost) return false
         credits -= cost
@@ -119,11 +118,9 @@ object GameState {
         for (i in plotStatus.indices) refreshStatus(i)
     }
 
-    // App band thi to us dauran ki kamai aur fasal ka status yahan set hota hai
-    // Return: kitne credits offline mile
     fun applyOffline(): Int {
         val now = System.currentTimeMillis()
-        val secs = ((now - lastSavedTime) / 1000L).coerceIn(0L, MAX_OFFLINE_SECONDS)
+        val secs = ((now - lastSavedTime) / 1000L).coerceIn(0L, Balance.MAX_OFFLINE_SECONDS)
         lastSavedTime = now
         if (secs <= 0L) return 0
         val before = credits
@@ -133,13 +130,13 @@ object GameState {
         return credits - before
     }
 
-    // Game ko shuru se shuru karna (Settings ke reset ke liye)
     fun resetGame() {
         credits = 777
         crystals = 77
         tier = 1
         cropBoostLevel = 0
         machineBoostLevel = 0
+        tutorialSeen = false
         for (i in 0 until 7) {
             plotUnlocked[i] = i == 0
             plotStatus[i] = 0
@@ -150,16 +147,16 @@ object GameState {
     }
 
     fun buyCrystals(): Boolean {
-        val cost = ShopList.crystalPackCost
+        val cost = Balance.CRYSTAL_PACK_COST
         if (credits < cost) return false
         credits -= cost
-        crystals += ShopList.crystalPackAmount
+        crystals += Balance.CRYSTAL_PACK_AMOUNT
         return true
     }
 
     fun buyCropBoost(): Boolean {
-        if (cropBoostLevel >= 5) return false
-        val cost = ShopList.boostCost
+        if (cropBoostLevel >= Balance.MAX_BOOST_LEVEL) return false
+        val cost = Balance.BOOST_CRYSTAL_COST
         if (crystals < cost) return false
         crystals -= cost
         cropBoostLevel += 1
@@ -167,8 +164,8 @@ object GameState {
     }
 
     fun buyMachineBoost(): Boolean {
-        if (machineBoostLevel >= 5) return false
-        val cost = ShopList.boostCost
+        if (machineBoostLevel >= Balance.MAX_BOOST_LEVEL) return false
+        val cost = Balance.BOOST_CRYSTAL_COST
         if (crystals < cost) return false
         crystals -= cost
         machineBoostLevel += 1
