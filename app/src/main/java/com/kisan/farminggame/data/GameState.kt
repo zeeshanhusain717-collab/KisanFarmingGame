@@ -5,9 +5,8 @@ object GameState {
     var crystals: Int = 77
     var tier: Int = 1
 
-    // Shop ke boosts: kitni baar kharide gaye
-    var cropBoostLevel: Int = 0      // har level par fasal ka daam +10%
-    var machineBoostLevel: Int = 0   // har level par machine income +10%
+    var cropBoostLevel: Int = 0
+    var machineBoostLevel: Int = 0
 
     val plotUnlocked = BooleanArray(7) { it == 0 }
     val plotStatus = IntArray(7)
@@ -15,7 +14,12 @@ object GameState {
 
     val machineParts = Array(7) { IntArray(7) { 1 } }
 
-    // Final balance: maximum credits limit (game ko achanak bahut bada na hone dein)
+    // Offline progress ke liye: last save ka time (milliseconds)
+    var lastSavedTime: Long = System.currentTimeMillis()
+
+    // Offline kamai ki maximum seconds (12 ghante)
+    const val MAX_OFFLINE_SECONDS = 12L * 3600L
+
     const val MAX_CREDITS = 9_999_999
 
     fun clampCredits() {
@@ -115,7 +119,36 @@ object GameState {
         for (i in plotStatus.indices) refreshStatus(i)
     }
 
-    // Dukaan: E-Crystals credits se kharidna
+    // App band thi to us dauran ki kamai aur fasal ka status yahan set hota hai
+    // Return: kitne credits offline mile
+    fun applyOffline(): Int {
+        val now = System.currentTimeMillis()
+        val secs = ((now - lastSavedTime) / 1000L).coerceIn(0L, MAX_OFFLINE_SECONDS)
+        lastSavedTime = now
+        if (secs <= 0L) return 0
+        val before = credits
+        credits += (totalIncomePerSecond() * secs).toInt()
+        clampCredits()
+        for (i in plotStatus.indices) refreshStatus(i)
+        return credits - before
+    }
+
+    // Game ko shuru se shuru karna (Settings ke reset ke liye)
+    fun resetGame() {
+        credits = 777
+        crystals = 77
+        tier = 1
+        cropBoostLevel = 0
+        machineBoostLevel = 0
+        for (i in 0 until 7) {
+            plotUnlocked[i] = i == 0
+            plotStatus[i] = 0
+            plotStartTime[i] = 0L
+            for (p in 0 until 7) machineParts[i][p] = 1
+        }
+        lastSavedTime = System.currentTimeMillis()
+    }
+
     fun buyCrystals(): Boolean {
         val cost = ShopList.crystalPackCost
         if (credits < cost) return false
@@ -124,7 +157,6 @@ object GameState {
         return true
     }
 
-    // Dukaan: fasal boost (crystals se)
     fun buyCropBoost(): Boolean {
         if (cropBoostLevel >= 5) return false
         val cost = ShopList.boostCost
@@ -134,7 +166,6 @@ object GameState {
         return true
     }
 
-    // Dukaan: machine boost (crystals se)
     fun buyMachineBoost(): Boolean {
         if (machineBoostLevel >= 5) return false
         val cost = ShopList.boostCost
