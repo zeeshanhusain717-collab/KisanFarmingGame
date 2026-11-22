@@ -16,7 +16,6 @@ class HomeActivity : AppCompatActivity() {
 
         SaveManager.load(this)
 
-        // App band thi to us dauran ki kamai judegi
         val earned = GameState.applyOffline()
         if (earned > 0) {
             Toast.makeText(this, "Offline kamai: +$earned credits", Toast.LENGTH_LONG).show()
@@ -25,7 +24,7 @@ class HomeActivity : AppCompatActivity() {
         val nav = findViewById<BottomNavigationView>(R.id.bottomNav)
 
         if (savedInstanceState == null) {
-            showFragment(KhetFragment())
+            showFragment(StoryFragment())
         }
 
         nav.setOnItemSelectedListener { item ->
@@ -39,6 +38,10 @@ class HomeActivity : AppCompatActivity() {
             }
             true
         }
+    }
+
+    fun openKhet() {
+        findViewById<BottomNavigationView>(R.id.bottomNav).selectedItemId = R.id.nav_khet
     }
 
     private fun showFragment(fragment: Fragment) {
