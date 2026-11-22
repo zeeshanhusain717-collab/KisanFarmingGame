@@ -29,7 +29,10 @@ class HomeActivity : AppCompatActivity() {
 
         nav.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_khet -> showFragment(KhetFragment())
+                R.id.nav_khet -> {
+                    showFragment(KhetFragment())
+                    TutorialDialog.showIfFirstTime(this)
+                }
                 R.id.nav_factory -> showFragment(MachineFragment())
                 R.id.nav_castle -> showFragment(CastleFragment())
                 R.id.nav_dukaan -> showFragment(ShopFragment())
@@ -42,6 +45,7 @@ class HomeActivity : AppCompatActivity() {
 
     fun openKhet() {
         findViewById<BottomNavigationView>(R.id.bottomNav).selectedItemId = R.id.nav_khet
+        TutorialDialog.showIfFirstTime(this)
     }
 
     private fun showFragment(fragment: Fragment) {
