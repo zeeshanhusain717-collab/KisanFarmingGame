@@ -9,6 +9,7 @@ data class Crop(
 )
 
 object CropList {
+    // growSeconds: fasal ugne ka time (seconds mein). 48 ghante ke liye baad mein badhaya ja sakta hai.
     val crops = listOf(
         Crop(1, "Gehu", 5, 10, 0),
         Crop(2, "Gajar", 8, 15, 300),
