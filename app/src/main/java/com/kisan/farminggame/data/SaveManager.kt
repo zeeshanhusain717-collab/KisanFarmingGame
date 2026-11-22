@@ -8,7 +8,6 @@ object SaveManager {
     private const val FILE_NAME = "save.json"
 
     fun save(context: Context) {
-        // Save ka time abhi ka set karo, taaki agli baar offline kamai sahi nikle
         GameState.lastSavedTime = System.currentTimeMillis()
 
         val root = JSONObject()
@@ -17,6 +16,7 @@ object SaveManager {
         root.put("tier", GameState.tier)
         root.put("cropBoostLevel", GameState.cropBoostLevel)
         root.put("machineBoostLevel", GameState.machineBoostLevel)
+        root.put("tutorialSeen", GameState.tutorialSeen)
         root.put("lastSaved", GameState.lastSavedTime)
 
         val plots = JSONArray()
@@ -50,8 +50,9 @@ object SaveManager {
             GameState.credits = root.optInt("credits", 777)
             GameState.crystals = root.optInt("crystals", 77)
             GameState.tier = root.optInt("tier", 1).coerceIn(1, 7)
-            GameState.cropBoostLevel = root.optInt("cropBoostLevel", 0).coerceIn(0, 5)
-            GameState.machineBoostLevel = root.optInt("machineBoostLevel", 0).coerceIn(0, 5)
+            GameState.cropBoostLevel = root.optInt("cropBoostLevel", 0).coerceIn(0, Balance.MAX_BOOST_LEVEL)
+            GameState.machineBoostLevel = root.optInt("machineBoostLevel", 0).coerceIn(0, Balance.MAX_BOOST_LEVEL)
+            GameState.tutorialSeen = root.optBoolean("tutorialSeen", false)
             GameState.lastSavedTime = root.optLong("lastSaved", System.currentTimeMillis())
 
             val plots = root.optJSONArray("plots")
@@ -70,6 +71,7 @@ object SaveManager {
                     val row = parts.getJSONArray(m)
                     for (p in 0 until minOf(7, row.length())) {
                         GameState.machineParts[m][p] = row.optInt(p, 1)
+                            .coerceIn(1, Balance.MAX_PART_LEVEL)
                     }
                 }
             }
