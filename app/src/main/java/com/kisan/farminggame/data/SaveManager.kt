@@ -10,6 +10,7 @@ object SaveManager {
     fun save(context: Context) {
         val root = JSONObject()
         root.put("credits", GameState.credits)
+        root.put("tier", GameState.tier)
 
         val plots = JSONArray()
         for (i in 0 until 7) {
@@ -38,9 +39,9 @@ object SaveManager {
         val file = context.getFileStreamPath(FILE_NAME)
         if (!file.exists()) return
         try {
-            val text = file.readText()
-            val root = JSONObject(text)
+            val root = JSONObject(file.readText())
             GameState.credits = root.optInt("credits", 777)
+            GameState.tier = root.optInt("tier", 1).coerceIn(1, 7)
 
             val plots = root.optJSONArray("plots")
             if (plots != null) {
@@ -62,7 +63,7 @@ object SaveManager {
                 }
             }
         } catch (e: Exception) {
-            // Save kharab ho to default values hi rahengi
+            // Save kharab ho to default values rahengi
         }
     }
 }
