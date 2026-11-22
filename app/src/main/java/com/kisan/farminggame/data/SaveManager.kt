@@ -10,7 +10,10 @@ object SaveManager {
     fun save(context: Context) {
         val root = JSONObject()
         root.put("credits", GameState.credits)
+        root.put("crystals", GameState.crystals)
         root.put("tier", GameState.tier)
+        root.put("cropBoostLevel", GameState.cropBoostLevel)
+        root.put("machineBoostLevel", GameState.machineBoostLevel)
 
         val plots = JSONArray()
         for (i in 0 until 7) {
@@ -41,7 +44,10 @@ object SaveManager {
         try {
             val root = JSONObject(file.readText())
             GameState.credits = root.optInt("credits", 777)
+            GameState.crystals = root.optInt("crystals", 77)
             GameState.tier = root.optInt("tier", 1).coerceIn(1, 7)
+            GameState.cropBoostLevel = root.optInt("cropBoostLevel", 0).coerceIn(0, 5)
+            GameState.machineBoostLevel = root.optInt("machineBoostLevel", 0).coerceIn(0, 5)
 
             val plots = root.optJSONArray("plots")
             if (plots != null) {
