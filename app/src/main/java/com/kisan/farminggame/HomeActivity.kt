@@ -24,6 +24,7 @@ class HomeActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_khet -> showFragment(KhetFragment())
                 R.id.nav_factory -> showFragment(MachineFragment())
+                R.id.nav_castle -> showFragment(CastleFragment())
                 else -> showFragment(PlaceholderFragment.newInstance(item.title.toString()))
             }
             true
